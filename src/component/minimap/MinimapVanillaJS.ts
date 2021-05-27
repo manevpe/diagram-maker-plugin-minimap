@@ -6,7 +6,7 @@ import {
   DiagramMakerWorkspace,
   Size
 } from 'diagram-maker';
-import MiniNode from 'diagramMakerMinimap/component/mininode/MiniNode';
+import MiniNodeVanillaJS from 'diagramMakerMinimap/component/mininode/MiniNodeVanillaJS';
 import {
   DiagramMakerMinimapType,
   getRectOffset,
@@ -14,7 +14,6 @@ import {
   getScale,
   RenderCallback
 } from 'diagramMakerMinimap/service';
-import * as React from 'react';
 import './Minimap.scss';
 
 export interface MinimapProps<NodeType, EdgeType> {
@@ -23,14 +22,29 @@ export interface MinimapProps<NodeType, EdgeType> {
   destroyCallback: DestroyCallback;
 }
 
-export class Minimap<NodeType, EdgeType> extends React.Component< MinimapProps<NodeType, EdgeType>> {
-  public render(): JSX.Element | undefined {
-    const plugins = this.props.state.plugins;
-    if (!plugins) return;
+export default class MinimapVanillaJS<NodeType, EdgeType> implements MinimapProps<NodeType, EdgeType> {
+  public state: DiagramMakerData<NodeType, EdgeType>;
+  public renderMiniNode: RenderCallback<NodeType>;
+  public destroyCallback: DestroyCallback;
+
+  constructor(
+    state: DiagramMakerData<NodeType, EdgeType>,
+    renderMiniNode: RenderCallback<NodeType>,
+    destroyCallback: DestroyCallback
+  ) {
+    this.state = state;
+    this.renderMiniNode = renderMiniNode;
+    this.destroyCallback = destroyCallback;
+  }
+
+  public getMinimapEl(): HTMLDivElement {
+    const plugins = this.state.plugins;
+    // If plugins are disbaled, return an empty div
+    if (!plugins) return document.createElement('div');
 
     const minimap = plugins.minimap;
-    const workspace = this.props.state.workspace;
-    const nodes = this.props.state.nodes;
+    const workspace = this.state.workspace;
+    const nodes = this.state.nodes;
 
     const scale = getScale(workspace, minimap);
     const containerSize = minimap.data.size;
@@ -42,30 +56,36 @@ export class Minimap<NodeType, EdgeType> extends React.Component< MinimapProps<N
     const rectSize = getRectSize(workspace, scale);
     const rectTransform = `translate3d(${rectOffset.x + emptyLeft}px, ${rectOffset.y + emptyTop}px, 0)`;
 
-    const renderedMinimapNodes = this.renderMinimapNodes(nodes, scale);
+    const renderedMinimapNodes = this.renderMinimapNodes(nodes, scale) as HTMLDivElement[];
+    const renderedMinimapNodesContainer = document.createElement('div');
+    for (const i of renderedMinimapNodes) {
+      renderedMinimapNodesContainer.appendChild(i);
+    }
 
-    return(
+    const minimapContainer = document.createElement('div');
+    minimapContainer.classList.add('dm-minimap-container');
+    minimapContainer.style.width = containerSize.width;
+    minimapContainer.style.height = containerSize.height;
+    minimapContainer.innerHTML = `
       <div
-        className="dm-minimap-container"
-        style={{ width: containerSize.width, height: containerSize.height }}
+        data-event-target="true"
+        data-draggable="true"
+        data-type="` + DiagramMakerMinimapType.RECTANGLE + `"
+        style="transform: ` + rectTransform + `; width: ` + rectSize.width + `px; height: ` + rectSize.height + `px;"
+        class="dm-minimap-rectangle"
       >
-        <div
-          data-event-target={true}
-          data-draggable={true}
-          data-type={DiagramMakerMinimapType.RECTANGLE}
-          style={{ transform: rectTransform, width: rectSize.width, height: rectSize.height }}
-          className="dm-minimap-rectangle"
-        />
-        <div
-          data-event-target={true}
-          data-type={DiagramMakerMinimapType.CANVAS}
-          className="dm-minimap-canvas"
-          style={{ width: canvasSize.width, height: canvasSize.height, top: emptyTop, left: emptyLeft }}
-        >
-          {renderedMinimapNodes}
-        </div>
       </div>
-    );
+      <div
+        data-event-target="true"
+        data-type="` + DiagramMakerMinimapType.CANVAS + `"
+        class="dm-minimap-canvas"
+        style="width: ` + canvasSize.width + `px; height: ` + canvasSize.height +
+        `px; top: ` + emptyTop + `px; left: ` + emptyLeft + `px;"
+      >
+        ` + renderedMinimapNodesContainer.innerHTML + `
+      </div>
+    `;
+    return minimapContainer;
   }
 
   private getCanvasSize(workspace: DiagramMakerWorkspace, containerSize: Size, scale: number): Size {
@@ -117,21 +137,19 @@ export class Minimap<NodeType, EdgeType> extends React.Component< MinimapProps<N
     return miniNode;
   }
 
-  private renderMinimapNodes(nodes: DiagramMakerNodes<NodeType>, scale: number) {
-    const renderCallback = this.props.renderMiniNode;
-    const destroyCallback = this.props.destroyCallback;
+  private renderMinimapNodes<HTMLDivElement>(nodes: DiagramMakerNodes<NodeType>, scale: number) {
+    const renderCallback = this.renderMiniNode;
+    const destroyCallback = this.destroyCallback;
 
     const nodeKeys = Object.keys(nodes);
     return nodeKeys.map((nodeKey: string) => {
       const miniNode = this.getMinimapNode(nodes[nodeKey], scale);
-      return (
-        <MiniNode
-          key={`miniNode_${nodes[nodeKey].id}`}
-          renderCallback={renderCallback.bind(null, nodes[nodeKey])}
-          destroyCallback={destroyCallback}
-          diagramMakerNode={miniNode}
-        />
-      );
+      const miniNodeEl = new MiniNodeVanillaJS(
+        renderCallback.bind(null, nodes[nodeKey]),
+        destroyCallback,
+        miniNode
+      ).getMiniNodeEl();
+      return miniNodeEl;
     });
   }
 }

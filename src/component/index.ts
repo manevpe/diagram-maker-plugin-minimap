@@ -1,2 +1,1 @@
-export { Minimap } from './minimap/Minimap';
-export { createMinimap } from './renderMinimap';
+export { createMinimapVanillaJS } from './renderMinimapVanillaJS';

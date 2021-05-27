@@ -34,8 +34,8 @@ export const graph: DiagramMakerData<{}, {}> = {
     },
     [`minimap`]: {
       id: `minimap`,
-      position: { x: 20, y: 0 },
-      size: { width: 250, height: 400 },
+      position: { x: 0, y: 0 },
+      size: { width: 200, height: 150 },
       positionAnchor: PositionAnchor.TOP_LEFT
     }
   },
@@ -49,7 +49,7 @@ export const graph: DiagramMakerData<{}, {}> = {
   workspace: {
     position: { x: 0, y: 0 },
     scale: 1,
-    canvasSize: { width: 1600, height: 3200 },
+    canvasSize: { width: 1920, height: 3840 },
     viewContainerSize: { width: window.innerWidth, height: window.innerHeight }
   },
   editor: { mode: EditorMode.DRAG }

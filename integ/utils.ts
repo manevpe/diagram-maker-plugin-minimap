@@ -1,6 +1,6 @@
 import { DiagramMaker, DiagramMakerNode, DiagramMakerPotentialNode, EditorMode, Size } from 'diagram-maker';
 import { Action, AnyAction } from 'redux';
-import { createMinimap } from '../src';
+import { createMinimapVanillaJS } from '../src';
 
 export function createDivWithText(text: string) {
   const newDiv = document.createElement('div');
@@ -419,7 +419,8 @@ export function createMinimapPanel(container: HTMLElement, state: any) {
   newDiv.appendChild(draggableElement);
 
   // create a minimap here
-  newDiv.appendChild(createMinimap(state, renderMiniNode, minimapDestroyCallback));
+  // newDiv.appendChild(createMinimap(state, renderMiniNode, minimapDestroyCallback));
+  newDiv.appendChild(createMinimapVanillaJS(state, renderMiniNode, minimapDestroyCallback));
 
   container.innerHTML = '';
   container.appendChild(newDiv);
