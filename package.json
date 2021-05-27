@@ -1,6 +1,6 @@
 {
   "name": "diagram-maker-plugin-minimap-vanillajs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A minimap plugin package for diagram-maker build with vanilla javascript",
   "author": {
     "name": "Petar Manev"
